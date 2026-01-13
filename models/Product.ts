@@ -1,7 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { IProduct } from '@/types';
 
-const productSchema = new Schema<IProduct>(
+const productSchema = new Schema(
   {
     name: {
       type: String,
@@ -76,13 +75,12 @@ const productSchema = new Schema<IProduct>(
 );
 
 // Auto-calculate finalPrice before saving
-productSchema.pre('save', function (next) {
+productSchema.pre('save', function (this: any) {
   if (this.discount > 0) {
     this.finalPrice = this.price - (this.price * this.discount) / 100;
   } else {
     this.finalPrice = this.price;
   }
-  next();
 });
 
 // Indexes for performance
@@ -94,7 +92,7 @@ productSchema.index({ stock: 1 });
 productSchema.index({ isActive: 1 });
 productSchema.index({ views: -1 });
 
-const Product: Model<IProduct> =
-  mongoose.models.Product || mongoose.model<IProduct>('Product', productSchema);
+const Product: Model<any> =
+  mongoose.models.Product || mongoose.model('Product', productSchema);
 
 export default Product;

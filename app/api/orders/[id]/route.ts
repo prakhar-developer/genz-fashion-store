@@ -5,7 +5,7 @@ import Order from '@/models/Order';
 // GET single order
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -17,8 +17,9 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
     await connectDB();
-    const order = await Order.findById(params.id);
+    const order = await Order.findById(id);
     
     if (!order) {
       return NextResponse.json(
@@ -40,7 +41,7 @@ export async function GET(
 // PUT update order
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -53,10 +54,11 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const { id } = await params;
 
     await connectDB();
 
-    const order = await Order.findById(params.id);
+    const order = await Order.findById(id);
     if (!order) {
       return NextResponse.json(
         { success: false, message: 'Order not found' },

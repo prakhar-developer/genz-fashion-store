@@ -6,11 +6,12 @@ import { generateSlug } from '@/lib/utils';
 // GET single product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
-    const product = await Product.findById(params.id).populate('category');
+    const product = await Product.findById(id).populate('category');
     
     if (!product) {
       return NextResponse.json(
@@ -36,7 +37,7 @@ export async function GET(
 // PUT update product
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -49,10 +50,11 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const { id } = await params;
 
     await connectDB();
 
-    const product = await Product.findById(params.id);
+    const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json(
         { success: false, message: 'Product not found' },
@@ -92,7 +94,7 @@ export async function PUT(
 // DELETE product
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -104,9 +106,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     await connectDB();
 
-    const product = await Product.findByIdAndDelete(params.id);
+    const product = await Product.findByIdAndDelete(id);
     
     if (!product) {
       return NextResponse.json(

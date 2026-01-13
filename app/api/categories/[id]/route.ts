@@ -6,11 +6,12 @@ import { generateSlug } from '@/lib/utils';
 // GET single category
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
-    const category = await Category.findById(params.id);
+    const category = await Category.findById(id);
     
     if (!category) {
       return NextResponse.json(
@@ -32,7 +33,7 @@ export async function GET(
 // PUT update category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -46,10 +47,11 @@ export async function PUT(
 
     const body = await request.json();
     const { name, parentCategory, isActive } = body;
+    const { id } = await params;
 
     await connectDB();
 
-    const category = await Category.findById(params.id);
+    const category = await Category.findById(id);
     if (!category) {
       return NextResponse.json(
         { success: false, message: 'Category not found' },
@@ -96,7 +98,7 @@ export async function PUT(
 // DELETE category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -108,10 +110,11 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     await connectDB();
 
     // Check if category has children
-    const children = await Category.find({ parentCategory: params.id });
+    const children = await Category.find({ parentCategory: id });
     if (children.length > 0) {
       return NextResponse.json(
         { success: false, message: 'Cannot delete category with subcategories' },
@@ -119,7 +122,7 @@ export async function DELETE(
       );
     }
 
-    const category = await Category.findByIdAndDelete(params.id);
+    const category = await Category.findByIdAndDelete(id);
     
     if (!category) {
       return NextResponse.json(

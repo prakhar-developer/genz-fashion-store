@@ -1,8 +1,7 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { IOrder } from '@/types';
 import { generateOrderNumber } from '@/lib/utils';
 
-const orderSchema = new Schema<IOrder>(
+const orderSchema = new Schema(
   {
     orderNumber: {
       type: String,
@@ -66,11 +65,10 @@ const orderSchema = new Schema<IOrder>(
 );
 
 // Auto-generate order number before saving
-orderSchema.pre('save', function (next) {
+orderSchema.pre('save', function (this: any) {
   if (!this.orderNumber) {
     this.orderNumber = generateOrderNumber();
   }
-  next();
 });
 
 // Indexes for performance
@@ -78,7 +76,7 @@ orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 
-const Order: Model<IOrder> =
-  mongoose.models.Order || mongoose.model<IOrder>('Order', orderSchema);
+const Order: Model<any> =
+  mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 export default Order;

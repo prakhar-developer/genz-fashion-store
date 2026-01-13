@@ -1,7 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { ICategory } from '@/types';
 
-const categorySchema = new Schema<ICategory>(
+const categorySchema = new Schema(
   {
     name: {
       type: String,
@@ -38,7 +37,7 @@ categorySchema.index({ slug: 1 });
 categorySchema.index({ parentCategory: 1 });
 categorySchema.index({ isActive: 1 });
 
-const Category: Model<ICategory> =
-  mongoose.models.Category || mongoose.model<ICategory>('Category', categorySchema);
+const Category: Model<any> =
+  mongoose.models.Category || mongoose.model('Category', categorySchema);
 
 export default Category;

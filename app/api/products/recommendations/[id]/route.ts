@@ -7,12 +7,13 @@ import { getSimilarProducts, getCompleteTheLook } from '@/utils/recommendations'
 // GET product recommendations
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
     
-    const product = await Product.findById(params.id);
+    const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json(
         { success: false, message: 'Product not found' },
