@@ -134,7 +134,7 @@ export default function FilterSidebar({
               <input
                 type="number"
                 value={filters.minPrice || ''}
-                onChange={(e) => handleFilterChange('minPrice', e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) => handleFilterChange('minPrice', e.target.value ? parseFloat(e.target.value) : undefined)}
                 placeholder="₹0"
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
@@ -144,7 +144,7 @@ export default function FilterSidebar({
               <input
                 type="number"
                 value={filters.maxPrice || ''}
-                onChange={(e) => handleFilterChange('maxPrice', e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value ? parseFloat(e.target.value) : undefined)}
                 placeholder="₹10000"
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />

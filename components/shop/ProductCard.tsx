@@ -28,7 +28,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         name: product.name,
         price: product.price,
         finalPrice: product.finalPrice,
-        image: product.images[0],
+        image: product.images[0] || '/placeholder.png',
       });
     }
     setInWishlist(!inWishlist);

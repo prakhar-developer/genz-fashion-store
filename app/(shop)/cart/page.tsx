@@ -69,7 +69,11 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cartItems.map((item) => (
-              <CartItemComponent key={`${item.productId}-${item.color}-${item.size}`} item={item} onUpdate={handleUpdate} />
+              <CartItemComponent 
+                key={`${item.productId}-${item.color || 'nocolor'}-${item.size || 'nosize'}`} 
+                item={item} 
+                onUpdate={handleUpdate} 
+              />
             ))}
 
             <div className="flex justify-end pt-4">

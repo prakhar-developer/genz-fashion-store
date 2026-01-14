@@ -41,8 +41,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!/^\d{10}$/.test(formData.phone)) {
-      alert('Please enter a valid 10-digit phone number');
+    if (!/^\d{10,15}$/.test(formData.phone)) {
+      alert('Please enter a valid phone number (10-15 digits)');
       return;
     }
 
