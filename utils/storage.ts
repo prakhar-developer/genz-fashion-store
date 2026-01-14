@@ -48,16 +48,24 @@ export const updateCartItem = (
   }
 };
 
-export const removeFromCart = (
-  productId: string,
-  color?: string,
-  size?: string
-): void => {
+export const updateCartItemQuantity = (productId: string, quantity: number): void => {
   const cart = getCart();
-  const filtered = cart.filter(
-    (i) =>
-      !(i.productId === productId && i.color === color && i.size === size)
-  );
+  const index = cart.findIndex((i) => i.productId === productId);
+
+  if (index > -1) {
+    if (quantity <= 0) {
+      cart.splice(index, 1);
+    } else {
+      cart[index].quantity = quantity;
+    }
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
+  }
+};
+
+export const removeFromCart = (productId: string): void => {
+  const cart = getCart();
+  const filtered = cart.filter((i) => i.productId !== productId);
   localStorage.setItem('cart', JSON.stringify(filtered));
   window.dispatchEvent(new Event('cartUpdated'));
 };
@@ -68,16 +76,24 @@ export const clearCart = (): void => {
 };
 
 // Wishlist management
-export const getWishlist = (): string[] => {
+interface WishlistItem {
+  productId: string;
+  name: string;
+  price: number;
+  finalPrice: number;
+  image: string;
+}
+
+export const getWishlist = (): WishlistItem[] => {
   if (typeof window === 'undefined') return [];
   const wishlist = localStorage.getItem('wishlist');
   return wishlist ? JSON.parse(wishlist) : [];
 };
 
-export const addToWishlist = (productId: string): void => {
+export const addToWishlist = (item: WishlistItem): void => {
   const wishlist = getWishlist();
-  if (!wishlist.includes(productId)) {
-    wishlist.push(productId);
+  if (!wishlist.find((i) => i.productId === item.productId)) {
+    wishlist.push(item);
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
     window.dispatchEvent(new Event('wishlistUpdated'));
   }
@@ -85,12 +101,17 @@ export const addToWishlist = (productId: string): void => {
 
 export const removeFromWishlist = (productId: string): void => {
   const wishlist = getWishlist();
-  const filtered = wishlist.filter((id) => id !== productId);
+  const filtered = wishlist.filter((item) => item.productId !== productId);
   localStorage.setItem('wishlist', JSON.stringify(filtered));
   window.dispatchEvent(new Event('wishlistUpdated'));
 };
 
 export const isInWishlist = (productId: string): boolean => {
   const wishlist = getWishlist();
-  return wishlist.includes(productId);
+  return wishlist.some((item) => item.productId === productId);
+};
+
+export const clearWishlist = (): void => {
+  localStorage.removeItem('wishlist');
+  window.dispatchEvent(new Event('wishlistUpdated'));
 };

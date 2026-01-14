@@ -26,3 +26,19 @@ export function generateOrderNumber(): string {
   const random = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `ORD-${timestamp}-${random}`;
 }
+
+export function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+export function getStockStatus(stock: number): string {
+  if (stock === 0) return 'Out of Stock';
+  if (stock <= 10) return 'Low Stock';
+  return 'In Stock';
+}
