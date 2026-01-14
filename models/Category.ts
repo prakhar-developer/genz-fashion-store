@@ -10,7 +10,6 @@ const categorySchema = new Schema(
     slug: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
     },
     parentCategory: {
@@ -33,7 +32,7 @@ const categorySchema = new Schema(
 );
 
 // Indexes for performance
-categorySchema.index({ slug: 1 });
+categorySchema.index({ slug: 1 }, { unique: true });
 categorySchema.index({ parentCategory: 1 });
 categorySchema.index({ isActive: 1 });
 

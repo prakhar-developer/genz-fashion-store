@@ -10,7 +10,6 @@ const productSchema = new Schema(
     slug: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
     },
     description: {
@@ -84,7 +83,7 @@ productSchema.pre('save', function (this: any) {
 });
 
 // Indexes for performance
-productSchema.index({ slug: 1 });
+productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ category: 1 });
 productSchema.index({ brand: 1 });
 productSchema.index({ finalPrice: 1 });

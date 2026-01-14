@@ -6,7 +6,6 @@ const orderSchema = new Schema(
     orderNumber: {
       type: String,
       required: true,
-      unique: true,
     },
     customerName: {
       type: String,
@@ -72,7 +71,7 @@ orderSchema.pre('save', function (this: any) {
 });
 
 // Indexes for performance
-orderSchema.index({ orderNumber: 1 });
+orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 
