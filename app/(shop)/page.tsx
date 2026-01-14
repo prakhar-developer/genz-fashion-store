@@ -1,66 +1,49 @@
-'use client';
+import HeroBanner from '@/components/shop/HeroBanner';
+import CategoryCard from '@/components/shop/CategoryCard';
+import ProductGrid from '@/components/shop/ProductGrid';
+import { ShoppingBag, Heart, Sparkles } from 'lucide-react';
 
-import Link from 'next/link';
-import { ShoppingBag, Heart, ShoppingCart, User } from 'lucide-react';
+async function getCategories() {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/categories`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.categories || [];
+  } catch (error) {
+    return [];
+  }
+}
 
-export default function HomePage() {
+async function getTrendingProducts() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/products?sort=-views&limit=8`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.products || [];
+  } catch (error) {
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const [categories, trendingProducts] = await Promise.all([
+    getCategories(),
+    getTrendingProducts(),
+  ]);
+
+  const rootCategories = categories.filter((cat: any) => !cat.parentCategory);
+
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
-                <ShoppingBag size={16} className="text-white" />
-              </div>
-              <span className="text-xl font-bold gradient-pink bg-clip-text text-transparent">
-                Gen-Z Fashion
-              </span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-gray-700 hover:text-primary-600 font-medium">
-                Home
-              </Link>
-              <Link href="/products" className="text-gray-700 hover:text-primary-600 font-medium">
-                Shop
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-4">
-              <Link href="/wishlist" className="text-gray-700 hover:text-primary-600">
-                <Heart size={20} />
-              </Link>
-              <Link href="/cart" className="text-gray-700 hover:text-primary-600">
-                <ShoppingCart size={20} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 via-white to-primary-100 py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Fashion That Speaks{' '}
-              <span className="gradient-pink bg-clip-text text-transparent">Your Language</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Discover the latest trends in Gen-Z fashion. Express yourself with our curated
-              collection of trendy clothes and accessories.
-            </p>
-            <Link href="/products" className="btn-primary inline-block">
-              Shop Now
-            </Link>
-          </div>
-        </div>
-      </section>
+      <HeroBanner />
 
       {/* Features */}
-      <section className="py-16">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -83,7 +66,7 @@ export default function HomePage() {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-                <ShoppingCart size={32} className="text-primary-600" />
+                <Sparkles size={32} className="text-primary-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">AI Recommendations</h3>
               <p className="text-gray-600">
@@ -94,14 +77,29 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-gray-400">
-            © 2026 Gen-Z Fashion Store. Built with 💖 by @prakhar-developer
-          </p>
-        </div>
-      </footer>
+      {/* Categories */}
+      {rootCategories.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="section-title text-center">Shop by Category</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {rootCategories.slice(0, 6).map((category: any) => (
+                <CategoryCard key={category._id} category={category} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Trending Products */}
+      {trendingProducts.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="section-title text-center">Trending Now</h2>
+            <ProductGrid products={trendingProducts} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
