@@ -81,7 +81,9 @@ export default function InventoryTable({ products }: InventoryTableProps) {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    {typeof product.category === 'object' ? product.category.name : 'N/A'}
+                    {typeof product.category === 'object' && product.category && 'name' in product.category
+                      ? (product.category as any).name
+                      : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="font-bold text-gray-900">₹{product.finalPrice}</span>
