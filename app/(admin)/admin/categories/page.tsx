@@ -21,17 +21,28 @@ export default function CategoriesPage() {
   }, []);
 
   const fetchCategories = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/categories');
-      const data = await res.json();
-      setCategories(data.categories || []);
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-    } finally {
-      setIsLoading(false);
+  setIsLoading(true);
+  try {
+    const res = await fetch('/api/categories');
+    const data = await res.json();
+    
+    console.log('API Response:', data); // ← Add this for debugging
+    
+    // ✅ Fix: Use data.data
+    if (data.success && Array.isArray(data.data)) {
+      setCategories(data.data);
+      console.log('Categories set:', data.data. length); // ← Add this
+    } else {
+      console.error('Invalid API response format:', data);
+      setCategories([]);
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
+    setCategories([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleAdd = (parent?: string) => {
     setSelectedCategory(undefined);
@@ -64,6 +75,7 @@ export default function CategoriesPage() {
   };
 
   const handleSubmit = async (data: any) => {
+  try {
     const url = selectedCategory
       ? `/api/categories/${selectedCategory._id}`
       : '/api/categories';
@@ -71,18 +83,29 @@ export default function CategoriesPage() {
 
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type':  'application/json' },
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'Failed to save category');
-    }
+    const result = await res.json();
 
-    setIsModalOpen(false);
-    await fetchCategories();
-  };
+    // ✅ Check status properly
+    if (res.status === 201 || (res.ok && result.success)) {
+      setIsModalOpen(false);
+      await fetchCategories();
+      alert('✅ Category saved successfully!');
+    } else if (res.status === 400) {
+      // Duplicate or validation error
+      throw new Error(result.message || 'Category already exists');
+    } else {
+      throw new Error(result.message || 'Failed to save category');
+    }
+  } catch (error:  any) {
+    console.error('Save category error:', error);
+    alert(`❌ ${error.message}`);
+    throw error; // Re-throw for CategoryForm error handling
+  }
+};
 
   return (
     <div>

@@ -11,7 +11,7 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
                 <ShoppingBag size={16} className="text-white" />
               </div>
-              <span className="text-xl font-bold">Gen-Z Fashion</span>
+              <span className="text-xl font-bold">WishCart</span>
             </div>
             <p className="text-gray-400 text-sm">
               Your one-stop destination for trendy Gen-Z fashion. Express yourself with style!

@@ -14,6 +14,8 @@ interface CategoryTreeProps {
 export default function CategoryTree({ categories, onEdit, onDelete, onAdd }: CategoryTreeProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
+  console.log('🌲 CategoryTree received categories:', categories);
+
   const toggleExpand = (categoryId: string) => {
     setExpandedCategories((prev) => {
       const next = new Set(prev);
@@ -26,9 +28,20 @@ export default function CategoryTree({ categories, onEdit, onDelete, onAdd }: Ca
     });
   };
 
-  const buildTree = (parentId?: string, level: number = 0): ICategory[] => {
+  // ✅ FIXED: Handle null/undefined properly
+  const buildTree = (parentId?: string | null, level:  number = 0): ICategory[] => {
     return categories
-      .filter((cat) => cat.parentCategory === parentId)
+      .filter((cat) => {
+        const catParent = cat. parentCategory;
+        
+        // Root level
+        if (parentId === undefined || parentId === null) {
+          return catParent === null || catParent === undefined || catParent === '';
+        }
+        
+        // Child level
+        return catParent === parentId;
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
@@ -56,13 +69,13 @@ export default function CategoryTree({ categories, onEdit, onDelete, onAdd }: Ca
             <div className="flex items-center gap-2">
               <span className="font-medium text-gray-900">{category.name}</span>
               <span className="text-xs text-gray-500">({category.slug})</span>
-              {!category.isActive && (
+              {! category.isActive && (
                 <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">
                   Inactive
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500">Level: {category.level}</p>
+            <p className="text-sm text-gray-500">Level:  {category.level}</p>
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -97,7 +110,27 @@ export default function CategoryTree({ categories, onEdit, onDelete, onAdd }: Ca
     );
   };
 
-  const rootCategories = buildTree(undefined, 0);
+  const rootCategories = buildTree(null, 0);
+  
+  console.log('🌳 Root categories found:', rootCategories. length);
+
+  // ✅ Add fallback if no categories
+  if (categories.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        No categories available
+      </div>
+    );
+  }
+
+  if (rootCategories.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <p className="mb-2">No root categories found</p>
+        <p className="text-sm">All categories have parent assigned</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">

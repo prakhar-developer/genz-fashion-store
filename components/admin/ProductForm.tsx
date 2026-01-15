@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IProduct, ICategory } from '@/types';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -13,12 +13,16 @@ interface ProductFormProps {
   onCancel: () => void;
 }
 
-export default function ProductForm({ product, categories, onSubmit, onCancel }: ProductFormProps) {
+export default function ProductForm({ product, categories, onSubmit, onCancel }:  ProductFormProps) {
   const [formData, setFormData] = useState({
     name: product?.name || '',
     slug: product?.slug || '',
     description: product?.description || '',
-    category: product?.category || '',
+    category: typeof product?.category === 'string'
+      ? product?.category
+      : typeof product?.category === 'object' && product?.category?._id
+        ? product.category._id
+        : '',
     brand: product?.brand || '',
     price: product?.price || 0,
     discount: product?.discount || 0,
@@ -31,8 +35,13 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // ✅ Debug: Log categories
   useEffect(() => {
-    if (!product && formData.name && !formData.slug) {
+    console.log('📂 Categories in form:', categories);
+  }, [categories]);
+
+  useEffect(() => {
+    if (!product && formData.name && ! formData.slug) {
       const slug = formData.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
@@ -61,7 +70,47 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
 
   const handleArrayInput = (field: 'colors' | 'sizes', value: string) => {
     const items = value.split(',').map((item) => item.trim()).filter(Boolean);
-    setFormData({ ...formData, [field]: items });
+    setFormData({ ... formData, [field]: items });
+  };
+
+  // ✅ Build hierarchical category list with proper indentation
+  const buildCategoryOptions = () => {
+    const categoryMap = new Map<string, ICategory>();
+    categories.forEach((cat) => categoryMap.set(cat._id, cat));
+
+    // Sort categories by level first, then by name
+    const sortedCategories = [... categories].sort((a, b) => {
+      if (a.level !== b.level) return a.level - b.level;
+      return a.name.localeCompare(b.name);
+    });
+
+    const options: React.JSX.Element[] = [];
+
+    const addCategory = (category: ICategory, prefix:  string = '') => {
+      options.push(
+        <option key={category._id} value={category._id}>
+          {prefix}{category.name}
+        </option>
+      );
+
+      // Find children
+      const children = sortedCategories.filter(
+        (cat) => cat.parentCategory === category._id
+      );
+
+      children.forEach((child) => {
+        addCategory(child, prefix + '  ↳ ');
+      });
+    };
+
+    // Start with root categories (no parent)
+    const rootCategories = sortedCategories.filter(
+      (cat) => ! cat.parentCategory || cat.parentCategory === null
+    );
+
+    rootCategories.forEach((cat) => addCategory(cat));
+
+    return options;
   };
 
   return (
@@ -95,9 +144,9 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
         <textarea
           required
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, description: e.target. value })}
           rows={4}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none"
           placeholder="Detailed product description..."
         />
       </div>
@@ -111,34 +160,42 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
             required
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none"
           >
             <option value="">Select a category</option>
-            {categories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
-                {'  '.repeat(cat.level)} {cat.name}
-              </option>
-            ))}
+            {buildCategoryOptions()}
           </select>
+          {/* ✅ Debug info */}
+          {categories.length === 0 && (
+            <p className="mt-1 text-xs text-red-600">
+              No categories available. Please create categories first.
+            </p>
+          )}
+          {categories.length > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              {categories.length} categories available
+            </p>
+          )}
         </div>
 
         <Input
           label="Brand"
           required
           value={formData.brand}
-          onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+          onChange={(e) => setFormData({ ...formData, brand: e.target. value })}
           placeholder="e.g., Nike, Adidas"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md: grid-cols-3 gap-4">
         <Input
           label="Price (₹)"
           type="number"
           required
           min="0"
+          step="0.01"
           value={formData.price}
-          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
           placeholder="0.00"
         />
 
@@ -147,8 +204,9 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
           type="number"
           min="0"
           max="100"
-          value={formData.discount}
-          onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) })}
+          step="1"
+          value={formData. discount}
+          onChange={(e) => setFormData({ ...formData, discount: parseFloat(e. target.value) || 0 })}
           placeholder="0"
         />
 
@@ -157,8 +215,9 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
           type="number"
           required
           min="0"
+          step="1"
           value={formData.stock}
-          onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
+          onChange={(e) => setFormData({ ... formData, stock: parseInt(e.target.value) || 0 })}
           placeholder="0"
         />
       </div>
@@ -174,7 +233,7 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
         <Input
           label="Colors"
           value={formData.colors.join(', ')}
-          onChange={(e) => handleArrayInput('colors', e.target.value)}
+          onChange={(e) => handleArrayInput('colors', e. target.value)}
           placeholder="e.g., Red, Blue, Black"
           helperText="Comma-separated values"
         />
@@ -192,12 +251,12 @@ export default function ProductForm({ product, categories, onSubmit, onCancel }:
         <input
           type="checkbox"
           id="isActive"
-          checked={formData.isActive}
+          checked={formData. isActive}
           onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-          className="w-4 h-4 text-primary-600 rounded"
+          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
         />
         <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
-          Active
+          Active (Show on website)
         </label>
       </div>
 

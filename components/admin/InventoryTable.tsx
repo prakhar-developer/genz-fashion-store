@@ -2,16 +2,22 @@
 
 import Link from 'next/link';
 import { IProduct } from '@/types';
-import { getStockStatus } from '@/lib/utils';
 import { AlertCircle } from 'lucide-react';
 
-interface InventoryTableProps {
+export interface InventoryTableProps {
   products: IProduct[];
+  onUpdate: () => Promise<void>; // <-- Add this line
 }
 
-export default function InventoryTable({ products }: InventoryTableProps) {
+export default function InventoryTable({ products, onUpdate }: InventoryTableProps) {
   const getLowStockProducts = () => {
     return products.filter((p) => p.stock <= 10).sort((a, b) => a.stock - b.stock);
+  };
+
+  const getStockStatus = (stock: number): string => {
+    if (stock === 0) return 'Out of Stock';
+    if (stock <= 10) return 'Low Stock';
+    return 'In Stock';
   };
 
   const lowStockProducts = getLowStockProducts();

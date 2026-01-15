@@ -16,7 +16,9 @@ export default function EditProductPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    if (params.id) {
+      fetchData();
+    }
   }, [params.id]);
 
   const fetchData = async () => {
@@ -30,61 +32,101 @@ export default function EditProductPage() {
       const catData = await catRes.json();
       const prodData = await prodRes.json();
 
-      setCategories(catData.categories || []);
-      setProduct(prodData.product || null);
+      console.log('📂 Categories response:', catData);
+      console.log('📦 Product response:', prodData);
+
+      // ✅ FIX: Use data. data
+      setCategories(catData. success && catData.data ?  catData.data : []);
+      setProduct(prodData.success && prodData.data ? prodData.data : null);
+
+      if (! prodData.success || !prodData.data) {
+        console.error('❌ Product not found');
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      setCategories([]);
+      setProduct(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSubmit = async (data: any) => {
-    const res = await fetch(`/api/products/${params.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(`/api/products/${params.id}`, {
+        method: 'PUT',
+        headers:  { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'Failed to update product');
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        alert('✅ Product updated successfully!');
+        router.push('/admin/products');
+      } else {
+        throw new Error(result.message || 'Failed to update product');
+      }
+    } catch (error:  any) {
+      console.error('Update error:', error);
+      throw error; // Re-throw for form to handle
     }
-
-    router.push('/admin/products');
   };
+
+  const handleCancel = () => {
+    if (confirm('Discard changes?')) {
+      router.push('/admin/products');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+          <p className="text-gray-600 mb-6">The product you're looking for doesn't exist.</p>
+          <Button onClick={() => router.push('/admin/products')}>
+            Back to Products
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-        <ArrowLeft size={20} className="mr-2" />
-        Back
-      </Button>
+      {/* Header */}
+      <button
+        onClick={() => router.push('/admin/products')}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition"
+      >
+        <ArrowLeft size={20} />
+        <span>Back to Products</span>
+      </button>
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
-        <p className="text-gray-600 mt-1">Update product details</p>
+        <p className="text-gray-600 mt-1">
+          Update product details for <span className="font-semibold">{product.name}</span>
+        </p>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <LoadingSpinner size="lg" />
-        </div>
-      ) : !product ? (
-        <div className="card p-12 text-center">
-          <p className="text-gray-600 mb-4">Product not found</p>
-          <Button onClick={() => router.push('/admin/products')}>Back to Products</Button>
-        </div>
-      ) : (
-        <div className="card p-6">
-          <ProductForm
-            product={product}
-            categories={categories}
-            onSubmit={handleSubmit}
-            onCancel={() => router.back()}
-          />
-        </div>
-      )}
+      <div className="card p-6 max-w-4xl">
+        <ProductForm
+          product={product}
+          categories={categories}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      </div>
     </div>
   );
 }

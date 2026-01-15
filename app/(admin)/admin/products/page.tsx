@@ -20,9 +20,21 @@ export default function ProductsListingPage() {
     try {
       const res = await fetch('/api/products?limit=100');
       const data = await res.json();
-      setProducts(data.products || []);
+      
+      console.log('📦 Products API response:', data);
+      
+      // ✅ FIX: Use data.data instead of data.products
+      if (data.success && Array.isArray(data.data)) {
+        setProducts(data.data);
+        console.log(`✅ Loaded ${data.data.length} products`);
+      } else {
+        console.error('❌ Invalid API response:', data);
+        setProducts([]);
+      }
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      console.error('❌ Failed to fetch products:', error);
+      alert('Failed to load products');
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
@@ -36,13 +48,17 @@ export default function ProductsListingPage() {
         method: 'DELETE',
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to delete product');
-      }
+      const data = await res.json();
 
-      await fetchProducts();
-    } catch (error: any) {
-      alert(error.message || 'Failed to delete product');
+      if (res.ok && data.success) {
+        alert('✅ Product deleted successfully! ');
+        await fetchProducts();
+      } else {
+        throw new Error(data.message || 'Failed to delete product');
+      }
+    } catch (error:  any) {
+      console.error('❌ Delete error:', error);
+      alert(`❌ ${error.message}`);
     }
   };
 
@@ -102,9 +118,18 @@ export default function ProductsListingPage() {
                 {products.map((product) => (
                   <tr key={product._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-sm text-gray-500">{product.brand}</p>
+                      <div className="flex items-center">
+                        {product.images && product.images.length > 0 && (
+                          <img
+                            src={product. images[0]}
+                            alt={product.name}
+                            className="h-12 w-12 rounded object-cover mr-3"
+                          />
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-900">{product.name}</p>
+                          <p className="text-sm text-gray-500">{product.brand}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
@@ -113,33 +138,63 @@ export default function ProductsListingPage() {
                         : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-bold text-gray-900">₹{product.finalPrice}</span>
+                      <span className="font-bold text-gray-900">₹{product.finalPrice. toLocaleString()}</span>
                       {product.discount > 0 && (
-                        <span className="ml-2 text-xs text-gray-500 line-through">
-                          ₹{product.price}
-                        </span>
+                        <>
+                          <span className="ml-2 text-xs text-gray-500 line-through">
+                            ₹{product.price.toLocaleString()}
+                          </span>
+                          <span className="ml-1 text-xs text-green-600 font-medium">
+                            ({product.discount}% off)
+                          </span>
+                        </>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`font-medium ${product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      <span 
+                        className={`font-medium ${
+                          product.stock > 10 
+                            ? 'text-green-600' 
+                            :  product.stock > 0 
+                            ? 'text-yellow-600' 
+                            : 'text-red-600'
+                        }`}
+                      >
                         {product.stock}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-1">
+                        {product.stock === 0 
+                          ? 'Out of stock' 
+                          : product. stock <= 10 
+                          ? 'Low stock' 
+                          : 'In stock'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`text-xs font-medium px-3 py-1 rounded-full ${product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {product.isActive ? 'Active' : 'Inactive'}
+                      <span 
+                        className={`text-xs font-medium px-3 py-1 rounded-full ${
+                          product.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {product.isActive ?  'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Link href={`/admin/products/edit/${product._id}`}>
-                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                          <button 
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            title="Edit product"
+                          >
                             <Edit size={16} />
                           </button>
                         </Link>
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Delete product"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -149,6 +204,13 @@ export default function ProductsListingPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Product count */}
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              Total products: <span className="font-medium">{products.length}</span>
+            </p>
           </div>
         </div>
       )}

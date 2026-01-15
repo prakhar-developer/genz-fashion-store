@@ -5,13 +5,23 @@ import { ShoppingBag, Heart, Sparkles } from 'lucide-react';
 
 async function getCategories() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/categories`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return [];
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/categories`,
+      { cache: 'no-store' }
+    );
+    
+    if (!res.ok) {
+      console.error('Categories API failed:', res.status);
+      return [];
+    }
+    
     const data = await res.json();
-    return data.categories || [];
+    console.log('📂 Categories API response:', data);
+    
+    // ✅ Fix: Use data.data
+    return data.data || [];
   } catch (error) {
+    console.error('Failed to fetch categories:', error);
     return [];
   }
 }
@@ -22,10 +32,19 @@ async function getTrendingProducts() {
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/products?sort=-views&limit=8`,
       { cache: 'no-store' }
     );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.products || [];
+    
+    if (!res.ok) {
+      console.error('Products API failed:', res.status);
+      return [];
+    }
+    
+    const data = await res. json();
+    console.log('📦 Products API response:', data);
+    
+    // ✅ Fix: Use data.data
+    return data.data || [];
   } catch (error) {
+    console.error('Failed to fetch products:', error);
     return [];
   }
 }
@@ -36,7 +55,17 @@ export default async function HomePage() {
     getTrendingProducts(),
   ]);
 
-  const rootCategories = categories.filter((cat: any) => !cat.parentCategory);
+  console.log('🏠 HomePage data:', {
+    categoriesCount: categories.length,
+    productsCount: trendingProducts. length,
+  });
+
+  // ✅ Filter root categories properly
+  const rootCategories = categories.filter(
+    (cat: any) => !cat.parentCategory || cat.parentCategory === null
+  );
+
+  console.log('📂 Root categories:', rootCategories. length);
 
   return (
     <div className="min-h-screen">
@@ -47,8 +76,8 @@ export default async function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-                <ShoppingBag size={32} className="text-primary-600" />
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                <ShoppingBag size={32} className="text-purple-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Trendy Collection</h3>
               <p className="text-gray-600">
@@ -56,8 +85,8 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-                <Heart size={32} className="text-primary-600" />
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                <Heart size={32} className="text-purple-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Easy Shopping</h3>
               <p className="text-gray-600">
@@ -65,8 +94,8 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-                <Sparkles size={32} className="text-primary-600" />
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                <Sparkles size={32} className="text-purple-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">AI Recommendations</h3>
               <p className="text-gray-600">
@@ -78,10 +107,12 @@ export default async function HomePage() {
       </section>
 
       {/* Categories */}
-      {rootCategories.length > 0 && (
+      {rootCategories.length > 0 ?  (
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
-            <h2 className="section-title text-center">Shop by Category</h2>
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Shop by Category
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {rootCategories.slice(0, 6).map((category: any) => (
                 <CategoryCard key={category._id} category={category} />
@@ -89,14 +120,34 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+      ) : (
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-gray-500">No categories available yet</p>
+          </div>
+        </section>
       )}
 
       {/* Trending Products */}
-      {trendingProducts.length > 0 && (
+      {trendingProducts. length > 0 ? (
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
-            <h2 className="section-title text-center">Trending Now</h2>
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+              Trending Now 🔥
+            </h2>
             <ProductGrid products={trendingProducts} />
+          </div>
+        </section>
+      ) : (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-gray-500">No products available yet</p>
+            <a 
+              href="/admin/login" 
+              className="mt-4 inline-block text-purple-600 hover:underline"
+            >
+              Login as admin to add products
+            </a>
           </div>
         </section>
       )}

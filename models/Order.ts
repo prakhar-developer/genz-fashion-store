@@ -71,10 +71,10 @@ orderSchema.pre('save', function (this: any) {
   }
 });
 
-// Indexes for performance
-orderSchema.index({ orderNumber: 1 });
-orderSchema.index({ status: 1 });
-orderSchema.index({ createdAt: -1 });
+// // Indexes for performance
+// orderSchema.index({ orderNumber: 1 });
+// orderSchema.index({ status: 1 });
+// orderSchema.index({ createdAt: -1 });
 
 const Order: Model<any> =
   mongoose.models.Order || mongoose.model('Order', orderSchema);

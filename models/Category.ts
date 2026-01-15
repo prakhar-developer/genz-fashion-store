@@ -32,10 +32,10 @@ const categorySchema = new Schema(
   }
 );
 
-// Indexes for performance
-categorySchema.index({ slug: 1 });
-categorySchema.index({ parentCategory: 1 });
-categorySchema.index({ isActive: 1 });
+// // Indexes for performance
+// categorySchema.index({ slug: 1 });
+// categorySchema.index({ parentCategory: 1 });
+// categorySchema.index({ isActive: 1 });
 
 const Category: Model<any> =
   mongoose.models.Category || mongoose.model('Category', categorySchema);

@@ -35,7 +35,7 @@ export default function Navbar() {
               <ShoppingBag size={16} className="text-white" />
             </div>
             <span className="text-xl font-bold gradient-pink bg-clip-text text-transparent">
-              Gen-Z Fashion
+              WishCart
             </span>
           </Link>
 

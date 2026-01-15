@@ -84,13 +84,13 @@ productSchema.pre('save', function (this: any) {
 });
 
 // Indexes for performance
-productSchema.index({ slug: 1 });
-productSchema.index({ category: 1 });
-productSchema.index({ brand: 1 });
-productSchema.index({ finalPrice: 1 });
-productSchema.index({ stock: 1 });
-productSchema.index({ isActive: 1 });
-productSchema.index({ views: -1 });
+// productSchema.index({ slug: 1 });
+// productSchema.index({ category: 1 });
+// productSchema.index({ brand: 1 });
+// productSchema.index({ finalPrice: 1 });
+// productSchema.index({ stock: 1 });
+// productSchema.index({ isActive: 1 });
+// productSchema.index({ views: -1 });
 
 const Product: Model<any> =
   mongoose.models.Product || mongoose.model('Product', productSchema);

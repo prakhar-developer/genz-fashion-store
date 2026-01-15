@@ -49,7 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <ShoppingBag size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-gray-900">Gen-Z Fashion</h1>
+              <h1 className="font-bold text-gray-900">WishCart</h1>
               <p className="text-xs text-gray-500">Admin Panel</p>
             </div>
           </div>

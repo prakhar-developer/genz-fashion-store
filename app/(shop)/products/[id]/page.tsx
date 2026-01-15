@@ -34,29 +34,63 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (product) {
       setInWishlist(isInWishlist(product._id));
+      
+      // Auto-select first color and size if only one option
+      if (product.colors. length === 1) setSelectedColor(product.colors[0]);
+      if (product.sizes.length === 1) setSelectedSize(product.sizes[0]);
     }
   }, [product]);
 
-  const fetchProduct = async (slug: string) => {
+  const fetchProduct = async (slugOrId: string) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/products?slug=${slug}`);
-      const data = await res.json();
+      // Try fetching by slug first
+      let res = await fetch(`/api/products?slug=${slugOrId}`);
+      let data = await res.json();
       
-      if (data.products && data.products.length > 0) {
-        const prod = data.products[0];
+      console.log('📦 Product API response:', data);
+      
+      // ✅ Fix: Use data.data
+      let products = data.success && data.data ? data.data : [];
+      
+      // If not found by slug, try by ID
+      if (products.length === 0) {
+        res = await fetch(`/api/products/${slugOrId}`);
+        data = await res. json();
+        
+        if (data.success && data.data) {
+          products = [data.data];
+        }
+      }
+      
+      if (products.length > 0) {
+        const prod = products[0];
         setProduct(prod);
         
+        console.log('✅ Product loaded:', prod. name);
+        
         // Fetch recommendations
-        const recRes = await fetch(`/api/products/recommendations/${prod._id}`);
-        const recData = await recRes.json();
-        setRecommendations({
-          similar: recData.similarProducts || [],
-          combo: recData.completeTheLook || [],
-        });
+        try {
+          const recRes = await fetch(`/api/products/recommendations/${prod._id}`);
+          const recData = await recRes. json();
+          
+          console.log('🎯 Recommendations:', recData);
+          
+          // ✅ Fix: Handle recommendations response
+          setRecommendations({
+            similar: recData.success && recData.data?. similar ?  recData.data.similar : [],
+            combo: recData.success && recData.data?.combo ?  recData.data.combo : [],
+          });
+        } catch (error) {
+          console.error('Failed to fetch recommendations:', error);
+        }
+      } else {
+        console.error('❌ Product not found');
+        setProduct(null);
       }
     } catch (error) {
       console.error('Failed to fetch product:', error);
+      setProduct(null);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +104,7 @@ export default function ProductDetailPage() {
       return;
     }
     
-    if (product.sizes.length > 0 && !selectedSize) {
+    if (product.sizes.length > 0 && ! selectedSize) {
       alert('Please select a size');
       return;
     }
@@ -81,12 +115,14 @@ export default function ProductDetailPage() {
       price: product.price,
       finalPrice: product.finalPrice,
       quantity: 1,
-      color: selectedColor,
+      color:  selectedColor,
       size: selectedSize,
-      image: product.images[0],
+      image: product. images[0] || '/placeholder-product.jpg',
     });
 
-    router.push('/cart');
+    alert('✅ Added to cart!');
+    // Optionally redirect to cart
+    // router.push('/cart');
   };
 
   const toggleWishlist = () => {
@@ -94,14 +130,16 @@ export default function ProductDetailPage() {
     
     if (inWishlist) {
       removeFromWishlist(product._id);
+      alert('❤️ Removed from wishlist');
     } else {
       addToWishlist({
         productId: product._id,
         name: product.name,
         price: product.price,
         finalPrice: product.finalPrice,
-        image: product.images[0],
+        image: product.images[0] || '/placeholder-product.jpg',
       });
+      alert('❤️ Added to wishlist! ');
     }
     setInWishlist(!inWishlist);
   };
@@ -118,6 +156,7 @@ export default function ProductDetailPage() {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+        <p className="text-gray-600 mb-6">The product you're looking for doesn't exist or has been removed.</p>
         <Button onClick={() => router.push('/products')}>Back to Shop</Button>
       </div>
     );
@@ -126,6 +165,19 @@ export default function ProductDetailPage() {
   return (
     <div className="py-8">
       <div className="container mx-auto px-4">
+        {/* Breadcrumb */}
+        <div className="text-sm text-gray-600 mb-6">
+          <button onClick={() => router.push('/')} className="hover:text-purple-600">
+            Home
+          </button>
+          {' > '}
+          <button onClick={() => router.push('/products')} className="hover:text-purple-600">
+            Products
+          </button>
+          {' > '}
+          <span className="text-gray-900">{product.name}</span>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Product Images */}
           <div>
@@ -134,14 +186,20 @@ export default function ProductDetailPage() {
 
           {/* Product Info */}
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              {product.name}
+            </h1>
             <p className="text-lg text-gray-600 mb-4">{product.brand}</p>
 
             <div className="flex items-center gap-4 mb-6">
-              <span className="text-3xl font-bold text-gray-900">₹{product.finalPrice}</span>
+              <span className="text-3xl font-bold text-gray-900">
+                ₹{product.finalPrice. toLocaleString()}
+              </span>
               {product.discount > 0 && (
                 <>
-                  <span className="text-xl text-gray-500 line-through">₹{product.price}</span>
+                  <span className="text-xl text-gray-500 line-through">
+                    ₹{product.price.toLocaleString()}
+                  </span>
                   <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-lg">
                     {product.discount}% OFF
                   </span>
@@ -150,11 +208,13 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="border-t border-b border-gray-200 py-6 mb-6">
-              <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {product.description}
+              </p>
             </div>
 
             {/* Color Selector */}
-            {product.colors.length > 0 && (
+            {product. colors.length > 0 && (
               <div className="mb-6">
                 <ColorSelector
                   colors={product.colors}
@@ -178,9 +238,13 @@ export default function ProductDetailPage() {
             {/* Stock Status */}
             <div className="mb-6">
               {product.stock > 0 ? (
-                <p className="text-green-600 font-medium">In Stock ({product.stock} available)</p>
+                <p className="text-green-600 font-medium">
+                  ✅ In Stock ({product. stock} available)
+                </p>
               ) : (
-                <p className="text-red-600 font-medium">Out of Stock</p>
+                <p className="text-red-600 font-medium">
+                  ❌ Out of Stock
+                </p>
               )}
             </div>
 
@@ -192,12 +256,13 @@ export default function ProductDetailPage() {
                 className="flex-1"
               >
                 <ShoppingCart size={20} className="mr-2" />
-                Add to Cart
+                {product.stock > 0 ?  'Add to Cart' : 'Out of Stock'}
               </Button>
               <Button
                 onClick={toggleWishlist}
                 variant="secondary"
                 className="px-6"
+                title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
               >
                 <Heart
                   size={20}
@@ -205,22 +270,41 @@ export default function ProductDetailPage() {
                 />
               </Button>
             </div>
+
+            {/* Product Details */}
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Product Details</h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li><span className="font-medium">Brand: </span> {product.brand}</li>
+                {product.colors.length > 0 && (
+                  <li><span className="font-medium">Available Colors:</span> {product.colors.join(', ')}</li>
+                )}
+                {product. sizes.length > 0 && (
+                  <li><span className="font-medium">Available Sizes:</span> {product.sizes.join(', ')}</li>
+                )}
+                <li><span className="font-medium">SKU:</span> {product._id. slice(-8).toUpperCase()}</li>
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Recommendations */}
         {recommendations.similar.length > 0 && (
-          <RecommendationSection
-            title="Similar Products You Might Like"
-            products={recommendations.similar}
-          />
+          <div className="mb-12">
+            <RecommendationSection
+              title="Similar Products You Might Like"
+              products={recommendations.similar}
+            />
+          </div>
         )}
 
         {recommendations.combo.length > 0 && (
-          <RecommendationSection
-            title="Complete The Look"
-            products={recommendations.combo}
-          />
+          <div className="mb-12">
+            <RecommendationSection
+              title="Complete The Look"
+              products={recommendations. combo}
+            />
+          </div>
         )}
       </div>
     </div>
